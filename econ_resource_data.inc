@@ -48,3 +48,4 @@ public void __pl_econ_resource_data_SetNTVOptional() {
 	MarkNativeAsOptional("EconResdata_GetKeyValues");
 	
 }
+#endif
