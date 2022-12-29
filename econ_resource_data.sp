@@ -12,7 +12,7 @@ public Plugin myinfo = {
 	name = "Econ Resource Data",
 	author = "Tk /id/Teamkiller324",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.3",
+	version = "1.0.4",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
@@ -84,6 +84,110 @@ enum struct ItemsGameRes {
 		}
 		
 		return lang.GetString(token, output, maxlen);
+	}
+	
+	bool GetItemName(int client, int itemdef, char[] name, int maxlen) {
+		switch(GetEngineVersion()) {
+			case Engine_TF2: {
+				char index[24];
+				IntToString(itemdef, index, sizeof(index));
+				
+				this.Schema.Rewind();
+				this.Schema.JumpToKey("items");
+				
+				if(!this.Schema.JumpToKey(index)) return false;
+				
+				char item_name[128];
+				this.Schema.GetString("item_name", item_name, sizeof(item_name));
+				
+				if(strlen(item_name) == 0) {
+					char prefab[64];
+					this.Schema.GetString("prefab", prefab, sizeof(prefab));
+					
+					if(strlen(prefab) == 0) return false;
+					
+					char armory_desc[32];
+					this.Schema.GetString("armory_desc", armory_desc, sizeof(armory_desc));
+					
+					bool baseitem = (StrContainsEx(armory_desc, "stockitem") || (this.Schema.GetNum("baseitem", -1) == 1));
+					
+					this.Schema.Rewind();
+					this.Schema.JumpToKey("prefabs");
+					
+					char buffer[3][64];
+					ExplodeString(prefab, " ", buffer, sizeof(buffer), sizeof(prefab));
+					
+					for(int i = 0; i < sizeof(buffer); i++) {
+						if(this.Schema.JumpToKey(buffer[i])) {
+							this.Schema.GetString("item_name", item_name, sizeof(item_name));
+							if(baseitem) this.Schema.SetNum("propername", 1);
+							break;
+						}
+					}
+					
+					if(strlen(item_name) == 0) return false;
+				}
+				
+				StringMap lang = this.GetLanguage(client); //No memory leak to be worried about, since we don't clone it.
+				if(lang == null) {
+					LogError("Unable to get item name for server language (attempting to print to \"%L\")!", client);
+					return false;
+				}
+				
+				if(!this.LocalizeToken(client, item_name[1], name, maxlen)) return false;
+				
+				char language_name[32];
+				lang.GetString("__name__", language_name, sizeof(language_name));
+				if(StrEqual(language_name, "english") && this.Schema.GetNum("propername")) Format(name, maxlen, "The %s", name);
+				
+				return true;
+			}
+			
+			case Engine_CSGO: {
+				char index[24];
+				IntToString(itemdef, index, sizeof(index));
+				
+				this.Schema.Rewind();
+				this.Schema.JumpToKey("items");
+				
+				if(!this.Schema.JumpToKey(index)) return false;
+				
+				char item_name[128];
+				this.Schema.GetString("item_name", item_name, sizeof(item_name));
+				
+				if(strlen(item_name) == 0) {
+					char prefab[64];
+					this.Schema.GetString("prefab", prefab, sizeof(prefab));
+					
+					if(strlen(prefab) == 0) return false;
+					
+					this.Schema.Rewind();
+					this.Schema.JumpToKey("prefabs");
+					
+					char buffer[3][64];
+					ExplodeString(prefab, " ", buffer, sizeof(buffer), sizeof(prefab));
+					
+					for(int i = 0; i < sizeof(buffer); i++) {
+						if(this.Schema.JumpToKey(buffer[i])) {
+							this.Schema.GetString("item_name", item_name, sizeof(item_name));
+							break;
+						}
+					}
+					
+					if(strlen(item_name) == 0) return false;
+					
+					StringMap lang = this.GetLanguage(client);
+					if(lang == null) {
+						LogError("Unable to get item name for server language (attempting to print to \"%L\")!", client);
+						return false;
+					}
+					
+					return this.LocalizeToken(client, item_name[1], name, maxlen);
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	StringMap GetLanguage(int client) {
@@ -178,6 +282,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	RegPluginLibrary("EconResourceData");
 	CreateNative("EconResData_LocalizeToken", Native_LocalizeToken);
 	CreateNative("EconResData_GetColour", Native_GetColour);
+	CreateNative("EconResData_GetItemName", Native_GetItemName);
 	CreateNative("EconResData_GetKeyValues", Native_GetKeyValues);
 }
 
@@ -225,6 +330,22 @@ any Native_GetKeyValues(Handle plugin, int params) {
 	return ItemsGame.Schema;
 }
 
+// EconResData_GetItemName(int client, int itemdef, char[] name, int maxlen)
+any Native_GetItemName(Handle plugin, int params) {
+	int client = GetNativeCell(1);
+	int itemdef = GetNativeCell(2);
+	int maxlen = GetNativeCell(4);
+	char[] name = new char[maxlen];
+	
+	bool rtrn = ItemsGame.GetItemName(client, itemdef, name, maxlen);
+	
+	SetNativeString(3, name, maxlen);
+	
+	PrintToServer("Native_GetItemName(client %i, itemdef %i, name '%s', maxlen %i)", client, itemdef, name, maxlen);
+	
+	return rtrn;
+}
+
 // --
 
 void StrToLower(char[] str) { for(int i = 0; i < strlen(str); i++) str[i] = CharToLower(str[i]); }
@@ -233,4 +354,8 @@ int GetNativeStringLengthEx(int param) {
 	int value;
 	GetNativeStringLength(param, value);
 	return value+1;
+}
+
+bool StrContainsEx(const char[] str, const char[] subStr) {
+	return view_as<bool>(StrContains(str, subStr, false) > -1);
 }
