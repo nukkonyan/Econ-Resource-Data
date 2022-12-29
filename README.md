@@ -1,4 +1,4 @@
-# Econ-Resource-Data
+> # Econ-Resource-Data v 1.0.4
 Localize and translate strings from within the game.
 
 > # Natives
