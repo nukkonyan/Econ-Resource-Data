@@ -341,8 +341,6 @@ any Native_GetItemName(Handle plugin, int params) {
 	
 	SetNativeString(3, name, maxlen);
 	
-	PrintToServer("Native_GetItemName(client %i, itemdef %i, name '%s', maxlen %i)", client, itemdef, name, maxlen);
-	
 	return rtrn;
 }
 
