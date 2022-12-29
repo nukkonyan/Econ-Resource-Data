@@ -6,13 +6,13 @@
  * Credits to legendary Dr. McKay for the language file parsing code, loaning from enhanced_items.sp (Enhanced Item Notifications) plugin
  * Credits to dragokas for some fixes.
  * Check 'Enhanced Item Notifications' made by legendary Dr. McKay.
-*/
+ */
 
 public Plugin myinfo = {
 	name = "Econ Resource Data",
 	author = "Tk /id/Teamkiller324",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.1",
+	version = "1.0.2",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
@@ -232,5 +232,5 @@ void StrToLower(char[] str) { for(int i = 0; i < strlen(str); i++) str[i] = Char
 int GetNativeStringLengthEx(int param) {
 	int value;
 	GetNativeStringLength(param, value);
-	return value++;
+	return value+1;
 }
