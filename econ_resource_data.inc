@@ -1,0 +1,32 @@
+#if defined _econ_resource_data_included
+	#error Econ Resource Data is already included.
+	#endinput
+#endif
+
+#define _econ_resource_data_included
+
+/**
+ *	Localize and translate the token string to its appropriate language string.
+ *
+ *	@param	client	The users index.
+ *	@param	token	The token string to read and translate.
+ *	@param	output	The output string.
+ *	@param	maxlen	The maximum length of the output string.
+ *
+ *	@return	If failed to find token, this returns false.
+ */
+native bool EconResData_LocalizeToken(int client, const char[] token, char[] output, int maxlen);
+
+/**
+ *	Get the hex colour from token string.
+ *
+ *	@param	token	The token string to read.
+ *
+ *	@noreturn
+ */
+native int EconResData_GetColour(const char[] token);
+
+/**
+ *	Returns the keyvalue handle of the items_game.txt file.
+ */
+native KeyValues EconResData_GetKeyValues();
