@@ -12,7 +12,7 @@ public Plugin myinfo = {
 	name = "Econ Resource Data",
 	author = "Tk /id/Teamkiller324",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.2",
+	version = "1.0.3",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
