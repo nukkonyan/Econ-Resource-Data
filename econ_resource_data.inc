@@ -6,7 +6,7 @@
 #define _econ_resource_data_included
 
 /**
- *	Localize and translate the token string to its appropriate language string.
+ *	Localize and translate the token string to its appropriate client language string.
  *
  *	@param	client	The users index.
  *	@param	token	The token string to read and translate.
