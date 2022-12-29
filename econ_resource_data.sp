@@ -12,13 +12,13 @@ public Plugin myinfo = {
 	name = "Econ Resource Data",
 	author = "Tk /id/Teamkiller324",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.0",
+	version = "1.0.1",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
 #define items_game_txt "scripts/items/items_game.txt"
 #define clientscheme_res "resource/clientscheme.res"
-char lang_prefix[64];
+char folder_name[16];
 
 enum struct ItemsGameRes {
 	KeyValues Schema;
@@ -106,7 +106,7 @@ enum struct ItemsGameRes {
 	
 	StringMap ParseLanguage(const char[] language_name) {
 		char filename[64];
-		Format(filename, sizeof(filename), "resource/%s_%s.txt", lang_prefix, language_name);
+		Format(filename, sizeof(filename), "resource/%s_%s.txt", folder_name, language_name);
 		
 		File file = OpenFile(filename, "r");
 		
@@ -183,11 +183,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart() {
 	switch(GetEngineVersion()) {
-		case Engine_TF2: lang_prefix = "tf";
-		case Engine_CSS: lang_prefix = "css";
-		case Engine_CSGO: lang_prefix = "csgo";
-		case Engine_Left4Dead: lang_prefix = "l4d";
-		case Engine_Left4Dead2: lang_prefix = "l4d2";
+		case Engine_TF2: folder_name = "tf";
+		default: GetGameFolderName(folder_name, sizeof(folder_name));
 	}
 	
 	ItemsGame.Load();
