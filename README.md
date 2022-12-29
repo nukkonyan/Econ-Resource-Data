@@ -1,5 +1,5 @@
 # Econ-Resource-Data
-Localize and translate strings.
+Localize and translate strings from within the game.
 
 > # Natives
   - EconResData_LocalizeToken(int client, const char[] token, char[] output, int maxlen)
