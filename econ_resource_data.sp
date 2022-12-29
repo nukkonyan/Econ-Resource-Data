@@ -225,7 +225,7 @@ any Native_GetColour(Handle plugin, int params) {
 
 // EconResData_GetKeyValues()
 any Native_GetKeyValues(Handle plugin, int params) {
-	return CloneHandle(ItemsGame.Schema);
+	return ItemsGame.Schema;
 }
 
 // --
