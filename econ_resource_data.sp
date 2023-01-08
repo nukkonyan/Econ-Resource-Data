@@ -12,7 +12,7 @@ public Plugin myinfo = {
 	name = "Econ Resource Data",
 	author = "Tk /id/Teamkiller324",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.4",
+	version = "1.0.5",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
@@ -20,9 +20,16 @@ public Plugin myinfo = {
 #define clientscheme_res "resource/clientscheme.res"
 char folder_name[16];
 
+enum struct ResourceInfo {
+	int language;
+	char token[1024];
+	char value[1024];
+}
+
 enum struct ItemsGameRes {
 	KeyValues Schema;
 	StringMap Languages;
+	ArrayList LanguagesBackup;
 	StringMap Colours;
 	
 	void Load() {
@@ -30,6 +37,7 @@ enum struct ItemsGameRes {
 		this.Schema.ImportFromFile(items_game_txt);
 		
 		this.Languages = new StringMap();
+		this.LanguagesBackup = new ArrayList(sizeof(ResourceInfo));
 		this.Colours = new StringMap();
 		
 		KeyValues kv = new KeyValues("Scheme");
@@ -83,7 +91,26 @@ enum struct ItemsGameRes {
 			return false;
 		}
 		
-		return lang.GetString(token, output, maxlen);
+		char fallback[128];
+		bool rtrn = lang.GetString(token, fallback, sizeof(fallback));
+		
+		// Some tokens just fails to be read even though it's stored.
+		if(!rtrn) {
+			int index = -1, language = (client == LANG_SERVER) ? GetServerLanguage() : GetClientLanguage(client);
+			
+			if((index = this.LanguagesBackup.FindValue(language)) >= 0) {
+				ResourceInfo info;
+				this.LanguagesBackup.GetArray(index, info, sizeof(info));
+				
+				if(StrEqual(fallback[1], info.token, false)) {
+					strcopy(fallback, sizeof(fallback), info.value);
+					rtrn = true;
+				}
+			}
+		}
+		
+		strcopy(output, maxlen, fallback);
+		return rtrn;
 	}
 	
 	bool GetItemName(int client, int itemdef, char[] name, int maxlen) {
@@ -198,7 +225,7 @@ enum struct ItemsGameRes {
 		
 		StringMap lang;
 		if(!this.Languages.GetValue(language_name, lang)) {
-			lang = this.ParseLanguage(language_name);
+			lang = this.ParseLanguage(language_name, language);
 			this.Languages.SetValue(language_name, lang);
 		}
 		
@@ -208,7 +235,7 @@ enum struct ItemsGameRes {
 		return lang;
 	}
 	
-	StringMap ParseLanguage(const char[] language_name) {
+	StringMap ParseLanguage(const char[] language_name, int language) {
 		char filename[64];
 		Format(filename, sizeof(filename), "resource/%s_%s.txt", folder_name, language_name);
 		
@@ -221,8 +248,10 @@ enum struct ItemsGameRes {
 		
 		int data, i = 0, high_surrogate, low_surrogate;
 		char line[3072];
-		while(ReadFileCell(file, data, 2) == 1) {
-			if(high_surrogate) {
+		while(ReadFileCell(file, data, 2) == 1)
+		{
+			if(high_surrogate)
+			{
 				// for characters in range 0x10000 <= X <= 0x10FFFF
 				low_surrogate = data;
 				data = ((high_surrogate - 0xD800) << 10) + (low_surrogate - 0xDC00) + 0x10000;
@@ -231,24 +260,33 @@ enum struct ItemsGameRes {
 				line[i++] = ((data >> 6) & 0x3F) | 0x80;
 				line[i++] = (data & 0x3F) | 0x80;
 				high_surrogate = 0;
-			} else if(data < 0x80) {
+			}
+			else if(data < 0x80)
+			{
 				// It's a single-byte character
 				line[i++] = data;
 				
-				if(data == '\n') {
+				if(data == '\n')
+				{
 					line[i] = '\0';
-					this.HandleLangLine(line, lang);
+					this.HandleLangLine(line, lang, language);
 					i = 0;
 				}
-			} else if(data < 0x800) {
+			}
+			else if(data < 0x800)
+			{
 				// It's a two-byte character
 				line[i++] = ((data >> 6) & 0x1F) | 0xC0;
 				line[i++] = (data & 0x3F) | 0x80;
-			} else if(data <= 0xFFFF) {
-				if(0xD800 <= data <= 0xDFFF) {
+			}
+			else if(data <= 0xFFFF)
+			{
+				if(0xD800 <= data <= 0xDFFF)
+				{
 					high_surrogate = data;
 					continue;
 				}
+				
 				line[i++] = ((data >> 12) & 0x0F) | 0xE0;
 				line[i++] = ((data >> 6) & 0x3F) | 0x80;
 				line[i++] = (data & 0x3F) | 0x80;
@@ -259,7 +297,8 @@ enum struct ItemsGameRes {
 		return lang;
 	}
 	
-	void HandleLangLine(char[] line, StringMap lang) {
+	void HandleLangLine(char[] line, StringMap lang, int language)
+	{
 		TrimString(line);
 		
 		// Not a line containing at least one quoted string
@@ -273,6 +312,12 @@ enum struct ItemsGameRes {
 		
 		BreakString(line[pos], value, sizeof(value));
 		lang.SetString(token, value);
+		
+		ResourceInfo info;
+		info.language = language;
+		info.token = token;
+		info.value = value;
+		this.LanguagesBackup.PushArray(info);
 	}
 }
 
@@ -286,14 +331,43 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("EconResData_GetKeyValues", Native_GetKeyValues);
 }
 
-public void OnPluginStart() {
-	switch(GetEngineVersion()) {
+public void OnPluginStart()
+{
+	switch(GetEngineVersion())
+	{
 		case Engine_TF2: folder_name = "tf";
 		default: GetGameFolderName(folder_name, sizeof(folder_name));
 	}
 	
 	ItemsGame.Load();
+	
+	// Debug
+	//RegConsoleCmd("sm_translate_token", TranslateTokenCmd, "Econ Resource Data - Translate a language token string.");
 }
+
+/*
+Action TranslateTokenCmd(int client, int args)
+{
+	if(args != 1)
+	{
+		ReplyToCommand(client, "[EconResData] Usage: sm_translate_token \"token here\"");
+		return;
+	}
+	
+	char token[64], translated[128];
+	if(GetCmdArg(1, token, sizeof(token)) < 1)
+	{
+		ReplyToCommand(client, "[EconResData] Token key may not be NULL");
+		return;
+	}
+	
+	switch(ItemsGame.LocalizeToken(client, token, translated, sizeof(translated)))
+	{
+		case false: ReplyToCommand(client, "[EconResData] Token '%s' was not found :(", token);
+		case true: ReplyToCommand(client, "[EconResData] Token '%s' was translated to '%s'", token, translated);
+	}
+}
+*/
 
 // --
 

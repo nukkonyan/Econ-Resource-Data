@@ -7,6 +7,9 @@ Localize and translate strings from within the game.
   - EconResData_GetItemName(int client, int itemdef, char[] name, int maxlen)
   - EconResData_GetKeyValues()
 
+> # Todo
+  - Fix CS:GO tokens to be read properly, as some fails to be read.
+
 > # Credits
   - Credits to legendary [Dr. McKay](https://github.com/DoctorMcKay) for the language file parsing code, loaning from enhanced_items.sp (Enhanced Item Notifications) plugin
   - Credits to [dragokas](https://github.com/dragokas) for some fixes regarding parsing the language file.
