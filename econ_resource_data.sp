@@ -248,10 +248,8 @@ enum struct ItemsGameRes {
 		
 		int data, i = 0, high_surrogate, low_surrogate;
 		char line[3072];
-		while(ReadFileCell(file, data, 2) == 1)
-		{
-			if(high_surrogate)
-			{
+		while(ReadFileCell(file, data, 2) == 1) {
+			if(high_surrogate) {
 				// for characters in range 0x10000 <= X <= 0x10FFFF
 				low_surrogate = data;
 				data = ((high_surrogate - 0xD800) << 10) + (low_surrogate - 0xDC00) + 0x10000;
@@ -261,28 +259,23 @@ enum struct ItemsGameRes {
 				line[i++] = (data & 0x3F) | 0x80;
 				high_surrogate = 0;
 			}
-			else if(data < 0x80)
-			{
+			else if(data < 0x80) {
 				// It's a single-byte character
 				line[i++] = data;
 				
-				if(data == '\n')
-				{
+				if(data == '\n') {
 					line[i] = '\0';
 					this.HandleLangLine(line, lang, language);
 					i = 0;
 				}
 			}
-			else if(data < 0x800)
-			{
+			else if(data < 0x800) {
 				// It's a two-byte character
 				line[i++] = ((data >> 6) & 0x1F) | 0xC0;
 				line[i++] = (data & 0x3F) | 0x80;
 			}
-			else if(data <= 0xFFFF)
-			{
-				if(0xD800 <= data <= 0xDFFF)
-				{
+			else if(data <= 0xFFFF) {
+				if(0xD800 <= data <= 0xDFFF) {
 					high_surrogate = data;
 					continue;
 				}
@@ -297,8 +290,7 @@ enum struct ItemsGameRes {
 		return lang;
 	}
 	
-	void HandleLangLine(char[] line, StringMap lang, int language)
-	{
+	void HandleLangLine(char[] line, StringMap lang, int language) {
 		TrimString(line);
 		
 		// Not a line containing at least one quoted string
@@ -331,10 +323,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("EconResData_GetKeyValues", Native_GetKeyValues);
 }
 
-public void OnPluginStart()
-{
-	switch(GetEngineVersion())
-	{
+public void OnPluginStart() {
+	switch(GetEngineVersion()) {
 		case Engine_TF2: folder_name = "tf";
 		default: GetGameFolderName(folder_name, sizeof(folder_name));
 	}
