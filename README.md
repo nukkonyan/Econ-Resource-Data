@@ -8,7 +8,7 @@ Localize and translate strings from within the game.
   - ``EconResData_GetKeyValues()``
 
 > # Todo
-  - Fix CS:GO tokens to be read properly, as some fails to be read.
+  - Fix CS:GO tokens to be read properly from the language file, as some fails to be read.
 
 > # Credits
   - Credits to [Dr. McKay](https://github.com/DoctorMcKay) for the language file parsing code, loaning from Enhanced Item Notifications plugin
