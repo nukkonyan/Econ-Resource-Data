@@ -59,6 +59,5 @@ public void __pl_econ_resource_data_SetNTVOptional() {
 	MarkNativeAsOptional("EconResData_GetColour");
 	MarkNativeAsOptional("EconResData_GetItemName");
 	MarkNativeAsOptional("EconResdata_GetKeyValues");
-	
 }
 #endif
