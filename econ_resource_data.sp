@@ -12,7 +12,7 @@ public Plugin myinfo = {
 	name = "Econ Resource Data",
 	author = "Tk /id/Teamkiller324",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.5",
+	version = "1.0.6",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
@@ -31,14 +31,18 @@ enum struct ItemsGameRes {
 	StringMap Languages;
 	ArrayList LanguagesBackup;
 	StringMap Colours;
+	ArrayList Classnames;
 	
 	void Load() {
 		this.Schema = new KeyValues("items_game");
-		this.Schema.ImportFromFile(items_game_txt);
+		if(this.Schema.ImportFromFile(items_game_txt)) {
+			CallSchemaForward();
+		}
 		
 		this.Languages = new StringMap();
 		this.LanguagesBackup = new ArrayList(sizeof(ResourceInfo));
 		this.Colours = new StringMap();
+		this.Classnames = new ArrayList(16);
 		
 		KeyValues kv = new KeyValues("Scheme");
 		kv.ImportFromFile(clientscheme_res);
@@ -82,6 +86,8 @@ enum struct ItemsGameRes {
 		}
 		
 		delete kv;
+		
+		this.GetClassnames();
 	}
 	
 	bool LocalizeToken(int client, const char[] token, char[] output, int maxlen) {
@@ -247,7 +253,7 @@ enum struct ItemsGameRes {
 		lang.SetString("__name__", language_name);
 		
 		int data, i = 0, high_surrogate, low_surrogate;
-		char line[3072];
+		char line[4096];
 		while(ReadFileCell(file, data, 2) == 1) {
 			if(high_surrogate) {
 				// for characters in range 0x10000 <= X <= 0x10FFFF
@@ -311,23 +317,68 @@ enum struct ItemsGameRes {
 		info.value = value;
 		this.LanguagesBackup.PushArray(info);
 	}
+	
+	void GetClassnames()
+	{
+		switch(GetEngineVersion())
+		{
+			case Engine_CSGO:
+			{
+				this.Schema.Rewind();
+				
+				if(this.Schema.JumpToKey("prefabs")) {
+					if(this.Schema.GotoFirstSubKey()) {
+						do {
+							char classname[64];
+							if(this.Schema.GetString("item_class", classname, sizeof(classname))) if(strlen(classname) >= 1) if(this.Classnames.FindString(classname) == -1) this.Classnames.PushString(classname);
+							if(this.Schema.GetString("anim_class", classname, sizeof(classname))) if(strlen(classname) >= 1) if(this.Classnames.FindString(classname) == -1) this.Classnames.PushString(classname);
+						}
+						while(this.Schema.GotoNextKey());
+						
+						this.Schema.GoBack();
+					}
+					
+					this.Schema.GoBack();
+				}
+				
+				if(this.Schema.JumpToKey("items")) {
+					if(this.Schema.GotoFirstSubKey()) {
+						do {
+							char classname[64];
+							if(this.Schema.GetString("item_class", classname, sizeof(classname))) if(strlen(classname) >= 1) if(this.Classnames.FindString(classname) == -1) this.Classnames.PushString(classname);
+						}
+						while(this.Schema.GotoNextKey());
+					}
+				}
+			}
+		}
+	}
 }
 
 ItemsGameRes ItemsGame;
+
+void CallSchemaForward() {
+	GlobalForward fwd = new GlobalForward("EconResData_OnItemsGameLoaded", ET_Ignore, Param_Any);
+	KeyValues clone = view_as<KeyValues>(CloneHandle(ItemsGame.Schema));
+	Call_StartForward(fwd);
+	Call_PushCell(clone);
+	Call_Finish();
+	delete clone;
+	delete fwd;
+}
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	RegPluginLibrary("EconResourceData");
 	CreateNative("EconResData_LocalizeToken", Native_LocalizeToken);
 	CreateNative("EconResData_GetColour", Native_GetColour);
 	CreateNative("EconResData_GetItemName", Native_GetItemName);
+	CreateNative("EconResData_ValidItemClassname", Native_ValidItemClassname);
 	CreateNative("EconResData_GetKeyValues", Native_GetKeyValues);
+	return APLRes_Success;
 }
 
 public void OnPluginStart() {
-	switch(GetEngineVersion()) {
-		case Engine_TF2: folder_name = "tf";
-		default: GetGameFolderName(folder_name, sizeof(folder_name));
-	}
+	GetGameFolderName(folder_name, sizeof(folder_name));
 	
 	ItemsGame.Load();
 	
@@ -391,7 +442,7 @@ any Native_GetColour(Handle plugin, int params) {
 
 // EconResData_GetKeyValues()
 any Native_GetKeyValues(Handle plugin, int params) {
-	return ItemsGame.Schema;
+	return CloneHandle(ItemsGame.Schema);
 }
 
 // EconResData_GetItemName(int client, int itemdef, char[] name, int maxlen)
@@ -406,6 +457,23 @@ any Native_GetItemName(Handle plugin, int params) {
 	SetNativeString(3, name, maxlen);
 	
 	return rtrn;
+}
+
+any Native_ValidItemClassname(Handle plugin, int params) {
+	int maxlen = GetNativeStringLengthEx(1);
+	char[] classname = new char[maxlen];
+	GetNativeString(1, classname, maxlen);
+	
+	switch(GetEngineVersion()) {
+		case Engine_CSGO: {
+			if(StrEqual(classname, "weapon_m4a1_silencer", false)
+			|| StrEqual(classname, "weapon_usp_silencer", false)) return true;
+		}
+	}
+	
+	StrToLower(classname);
+	
+	return ItemsGame.Classnames.FindString(classname) != -1;
 }
 
 // --

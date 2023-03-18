@@ -6,6 +6,15 @@
 #define _econ_resource_data_included
 
 /**
+ *	Called when the items_game.txt has been parsed.
+ *
+ *	@param	kv	The items_game.txt keyvalues.
+ *
+ *	@noreturn
+ */
+forward void EconResData_OnItemsGameLoaded(KeyValues kv);
+
+/**
  *	Localize and translate the token string to its appropriate language string.
  *
  *	@param	client	The users index.
@@ -39,6 +48,15 @@ native int EconResData_GetColour(const char[] token);
 native bool EconResData_GetItemName(int client, int itemdef, char[] name, int maxlen);
 
 /**
+ *	Returns wheter the item classname is valid.
+ *
+ *	@param	classname	The item classname.
+ *
+ *	@return	Returns wheter the classname is valid or not.
+ */
+native bool EconResData_ValidItemClassname(const char[] item_classname);
+
+/**
  *	Returns the keyvalue handle of the items_game.txt file.
  */
 native KeyValues EconResData_GetKeyValues();
@@ -58,6 +76,7 @@ public void __pl_econ_resource_data_SetNTVOptional() {
 	MarkNativeAsOptional("EconResData_LocalizeToken");
 	MarkNativeAsOptional("EconResData_GetColour");
 	MarkNativeAsOptional("EconResData_GetItemName");
+	MarkNativeAsOptional("EconResData_ValidItemClassname");
 	MarkNativeAsOptional("EconResdata_GetKeyValues");
 }
 #endif
