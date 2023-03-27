@@ -10,9 +10,9 @@
 
 public Plugin myinfo = {
 	name = "Econ Resource Data",
-	author = "Tk /id/Teamkiller324",
+	author = "チームキラー３２４",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.6",
+	version = "1.0.7",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
@@ -32,17 +32,21 @@ enum struct ItemsGameRes {
 	ArrayList LanguagesBackup;
 	StringMap Colours;
 	ArrayList Classnames;
+	ArrayList Skins;
 	
 	void Load() {
 		this.Schema = new KeyValues("items_game");
-		if(this.Schema.ImportFromFile(items_game_txt)) {
-			CallSchemaForward();
-		}
+		if(this.Schema.ImportFromFile(items_game_txt)) CallSchemaForward();
 		
 		this.Languages = new StringMap();
 		this.LanguagesBackup = new ArrayList(sizeof(ResourceInfo));
 		this.Colours = new StringMap();
 		this.Classnames = new ArrayList(16);
+		
+		switch(GetEngineVersion()) {
+			case Engine_TF2: if(StrEqual(folder_name, "tf", false)) this.Skins = new ArrayList();
+			case Engine_CSGO: this.Skins = new ArrayList();
+		}
 		
 		KeyValues kv = new KeyValues("Scheme");
 		kv.ImportFromFile(clientscheme_res);
@@ -88,6 +92,7 @@ enum struct ItemsGameRes {
 		delete kv;
 		
 		this.GetClassnames();
+		this.GetSkins();
 	}
 	
 	bool LocalizeToken(int client, const char[] token, char[] output, int maxlen) {
@@ -318,12 +323,9 @@ enum struct ItemsGameRes {
 		this.LanguagesBackup.PushArray(info);
 	}
 	
-	void GetClassnames()
-	{
-		switch(GetEngineVersion())
-		{
-			case Engine_CSGO:
-			{
+	void GetClassnames() {
+		switch(GetEngineVersion()) {
+			case Engine_CSGO: {
 				this.Schema.Rewind();
 				
 				if(this.Schema.JumpToKey("prefabs")) {
@@ -351,6 +353,111 @@ enum struct ItemsGameRes {
 					}
 				}
 			}
+			
+			case Engine_TF2: {
+				if(!StrEqual(folder_name, "tf", false)) return;				
+				if(!this.Schema.JumpToKey("prefabs")) return;
+				
+				if(this.Schema.GotoFirstSubKey()) {
+					do {
+						char section[64], item_class[64];
+						this.Schema.GetSectionName(section, sizeof(section));
+						this.Schema.GetString("item_class", item_class, sizeof(item_class));
+						
+						// valid item classname
+						if(strlen(item_class) > 0) if(this.Classnames.FindString(item_class) == -1) this.Classnames.PushString(item_class);
+						
+						// no item classname, must find prefab within
+						else {
+							char prefabs[96];
+							this.Schema.GetString("prefab", prefabs, sizeof(prefabs));
+							this.Schema.GoBack();
+							
+							char buffer1[4][64];
+							int found1 = ExplodeString(prefabs, " ", buffer1, sizeof(buffer1), 64);
+							
+							for(int i = 0; i < found1; i++) {
+								// found valid prefab within
+								if(this.Schema.JumpToKey(buffer1[i])) {
+									this.Schema.GetString("item_class", item_class, sizeof(item_class));
+									this.Schema.GoBack();
+									
+									if(strlen(item_class) > 0) if(this.Classnames.FindString(item_class) == -1) this.Classnames.PushString(item_class);
+									else {
+										char buffer2[4][64];
+										int found2 = ExplodeString(prefabs, " ", buffer2, sizeof(buffer2), 64);
+										
+										this.Schema.GetString("prefab", prefabs, sizeof(prefabs));
+										
+										for(int x = 0; x < found2; x++) {
+											if(this.Schema.JumpToKey(buffer2[x])) {
+												this.Schema.GetString("item_class", item_class, sizeof(item_class));
+												this.Schema.GoBack();
+												
+												if(strlen(item_class) > 0) if(this.Classnames.FindString(item_class) == -1) this.Classnames.PushString(item_class);
+											}
+										}
+									}
+								}
+							}
+							
+							this.Schema.JumpToKey(section);
+						}
+					}
+					
+					//delete prefabs;
+					while(this.Schema.GotoNextKey());
+				}
+			}
+		}
+	}
+	
+	void GetSkins() {
+		switch(GetEngineVersion()) {
+			case Engine_CSGO: {
+				this.Schema.Rewind();
+				
+				if(this.Schema.GotoFirstSubKey()) {
+					do {
+						char section[16];
+						this.Schema.GetSectionName(section, sizeof(section));
+						
+						if(StrEqual(section, "paint_kits")) {
+							if(this.Schema.GotoFirstSubKey()) {
+								do {
+									this.Schema.GetSectionName(section, sizeof(section));
+									int paintkit_id = StringToInt(section);
+									
+									if(paintkit_id < 1 || paintkit_id == 9001) continue;
+									if(this.Skins.FindValue(paintkit_id) == -1) this.Skins.Push(paintkit_id);
+								}
+								while(this.Schema.GotoNextKey());
+								
+								this.Schema.GoBack();
+							}
+						}
+					}
+					while(this.Schema.GotoNextKey());
+				}
+			}
+			case Engine_TF2: {
+				if(StrEqual(folder_name, "tf", false)) {
+					this.Schema.Rewind();
+					
+					if(this.Schema.JumpToKey("items")) {
+						if(this.Schema.GotoFirstSubKey()) {
+							do {
+								if(this.Schema.JumpToKey("static_attrs")) {
+									int paintkit_proto_def_index = this.Schema.GetNum("paintkit_proto_def_index");
+									if(this.Skins.FindValue(paintkit_proto_def_index) == -1) this.Skins.Push(paintkit_proto_def_index);
+									this.Schema.GoBack();
+								}
+							}
+							while(this.Schema.GotoNextKey());
+						}
+					}
+				}
+			}
 		}
 	}
 }
@@ -374,6 +481,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("EconResData_GetItemName", Native_GetItemName);
 	CreateNative("EconResData_ValidItemClassname", Native_ValidItemClassname);
 	CreateNative("EconResData_GetKeyValues", Native_GetKeyValues);
+	CreateNative("EconResData_GetGameSkins", Native_GetGameSkins);
 	return APLRes_Success;
 }
 
@@ -474,6 +582,11 @@ any Native_ValidItemClassname(Handle plugin, int params) {
 	StrToLower(classname);
 	
 	return ItemsGame.Classnames.FindString(classname) != -1;
+}
+
+any Native_GetGameSkins(Handle plugins, int params) {
+	if(ItemsGame.Skins == null) return view_as<Handle>(null);
+	return CloneHandle(ItemsGame.Skins);
 }
 
 // --

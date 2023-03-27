@@ -1,11 +1,13 @@
-> # Econ Resource Data v1.0.5
+> # Econ Resource Data v1.0.7
 Localize and translate strings from within the game.
 
 > # Natives
   - ``EconResData_LocalizeToken(int client, const char[] token, char[] output, int maxlen)``
   - ``EconResData_GetColour(const char[] token)``
   - ``EconResData_GetItemName(int client, int itemdef, char[] name, int maxlen)``
+  - ``EconResData_ValidItemClassname(const char[] item_classname)``
   - ``EconResData_GetKeyValues()``
+  - ``EconResData_GetGameSkins()``
 
 > # Todo
   - Fix CS:GO tokens to be read properly from the language file, as some fails to be read.

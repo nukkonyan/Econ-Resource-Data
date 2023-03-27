@@ -6,60 +6,69 @@
 #define _econ_resource_data_included
 
 /**
- *	Called when the items_game.txt has been parsed.
+ * Called when the items_game.txt has been parsed.
  *
- *	@param	kv	The items_game.txt keyvalues.
+ * @param	kv	The items_game.txt keyvalues.
  *
- *	@noreturn
+ * @noreturn
  */
 forward void EconResData_OnItemsGameLoaded(KeyValues kv);
 
 /**
  *	Localize and translate the token string to its appropriate language string.
  *
- *	@param	client	The users index.
- *	@param	token	The token string to read and translate.
- *	@param	output	The output string.
- *	@param	maxlen	The maximum length of the output string.
+ * @param	client	The users index.
+ * @param	token	The token string to read and translate.
+ * @param	output	The output string.
+ * @param	maxlen	The maximum length of the output string.
  *
- *	@return	If failed to find token, this returns false.
+ * @return	If failed to find token, this returns false.
  */
 native bool EconResData_LocalizeToken(int client, const char[] token, char[] output, int maxlen);
 
 /**
- *	Get the hex colour from token string.
+ * Get the hex colour from token string.
  *
- *	@param	token	The token string to read.
+ * @param	token	The token string to read.
  *
- *	@noreturn
+ * @noreturn
  */
 native int EconResData_GetColour(const char[] token);
 
 /**
- *	Returns the item name by the clients language.
+ * Returns the item name by the clients language.
  *
- *	@param	client	The users index.
- *	@param	itemdef	The item definition index.
- *	@param	name	The item name output.
- *	@param	maxlen	The maximum length of the item name output.
+ * @param	client	The users index.
+ * @param	itemdef	The item definition index.
+ * @param	name	The item name output.
+ * @param	maxlen	The maximum length of the item name output.
  *
- *	@return	Returns if the item name was found or not.
+ * @return	Returns if the item name was found or not.
  */
 native bool EconResData_GetItemName(int client, int itemdef, char[] name, int maxlen);
 
 /**
- *	Returns wheter the item classname is valid.
+ * Returns wheter the item classname is valid.
  *
- *	@param	classname	The item classname.
+ * @param	classname	The item classname.
  *
- *	@return	Returns wheter the classname is valid or not.
+ * @return	Returns wheter the classname is valid or not.
  */
 native bool EconResData_ValidItemClassname(const char[] item_classname);
 
 /**
- *	Returns the keyvalue handle of the items_game.txt file.
+ * Returns the keyvalue handle of the items_game.txt file.
+ *
+ * Must be destroyed after use, to prevent leak.
  */
 native KeyValues EconResData_GetKeyValues();
+
+/**
+ * Returns an array list of game skins.
+ *
+ * Must be destroyed after use, to prevent leak.
+ */
+native ArrayList EconResData_GetGameSkins();
 
 public SharedPlugin __pl_econ_resource_data = {
 	name = "EconResourceData",
@@ -77,6 +86,7 @@ public void __pl_econ_resource_data_SetNTVOptional() {
 	MarkNativeAsOptional("EconResData_GetColour");
 	MarkNativeAsOptional("EconResData_GetItemName");
 	MarkNativeAsOptional("EconResData_ValidItemClassname");
-	MarkNativeAsOptional("EconResdata_GetKeyValues");
+	MarkNativeAsOptional("EconResData_GetKeyValues");
+	MarkNativeAsOptional("EconResData_GetGameSkins");
 }
 #endif
