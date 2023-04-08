@@ -70,6 +70,15 @@ native KeyValues EconResData_GetKeyValues();
  */
 native ArrayList EconResData_GetGameSkins();
 
+/**
+ * Returns if the skin id is valid.
+ *
+ * @param	skin_id		The skin id.
+ *
+ * @error	If game contains no skins, this returns false.
+ */
+native bool EconResData_ValidGameSkin(int skin_id);
+
 public SharedPlugin __pl_econ_resource_data = {
 	name = "EconResourceData",
 	file = "econ_resource_data.smx",
@@ -88,5 +97,6 @@ public void __pl_econ_resource_data_SetNTVOptional() {
 	MarkNativeAsOptional("EconResData_ValidItemClassname");
 	MarkNativeAsOptional("EconResData_GetKeyValues");
 	MarkNativeAsOptional("EconResData_GetGameSkins");
+	MarkNativeAsOptional("EconResData_ValidGameSkin");
 }
 #endif

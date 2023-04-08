@@ -12,7 +12,7 @@ public Plugin myinfo = {
 	name = "Econ Resource Data",
 	author = "チームキラー３２４",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.7",
+	version = "1.0.8",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
@@ -482,6 +482,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("EconResData_ValidItemClassname", Native_ValidItemClassname);
 	CreateNative("EconResData_GetKeyValues", Native_GetKeyValues);
 	CreateNative("EconResData_GetGameSkins", Native_GetGameSkins);
+	CreateNative("EconResData_ValidGameSkin", Native_ValidGameSkin);
 	return APLRes_Success;
 }
 
@@ -491,10 +492,12 @@ public void OnPluginStart() {
 	ItemsGame.Load();
 	
 	// Debug
-	//RegConsoleCmd("sm_translate_token", TranslateTokenCmd, "Econ Resource Data - Translate a language token string.");
+	#if defined DEBUG
+	RegConsoleCmd("sm_translate_token", TranslateTokenCmd, "Econ Resource Data - Translate a language token string.");
+	#endif
 }
 
-/*
+#if defined DEBUG
 Action TranslateTokenCmd(int client, int args)
 {
 	if(args != 1)
@@ -516,7 +519,7 @@ Action TranslateTokenCmd(int client, int args)
 		case true: ReplyToCommand(client, "[EconResData] Token '%s' was translated to '%s'", token, translated);
 	}
 }
-*/
+#endif
 
 // --
 
@@ -584,9 +587,16 @@ any Native_ValidItemClassname(Handle plugin, int params) {
 	return ItemsGame.Classnames.FindString(classname) != -1;
 }
 
-any Native_GetGameSkins(Handle plugins, int params) {
+any Native_GetGameSkins(Handle plugin, int params) {
 	if(ItemsGame.Skins == null) return view_as<Handle>(null);
+	if(ItemsGame.Skins.Length < 1) return view_as<Handle>(null);
 	return CloneHandle(ItemsGame.Skins);
+}
+
+any Native_ValidGameSkin(Handle plugin, int params) {
+	if(ItemsGame.Skins == null) return false;
+	if(ItemsGame.Skins.Length < 1) return view_as<Handle>(null);
+	return ItemsGame.Skins.FindValue(GetNativeCell(1)) != -1;
 }
 
 // --
