@@ -8,6 +8,7 @@ Localize and translate strings from within the game.
   - ``EconResData_ValidItemClassname(const char[] item_classname)``
   - ``EconResData_GetKeyValues()``
   - ``EconResData_GetGameSkins()``
+  - ``EconResData_GetGameClassnames()``
   - ``EconResData_ValidGameSkin(int skin_id)``
 
 > # Todo

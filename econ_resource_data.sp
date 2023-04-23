@@ -12,7 +12,7 @@ public Plugin myinfo = {
 	name = "Econ Resource Data",
 	author = "チームキラー３２４",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.8",
+	version = "1.0.9",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
@@ -482,6 +482,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("EconResData_ValidItemClassname", Native_ValidItemClassname);
 	CreateNative("EconResData_GetKeyValues", Native_GetKeyValues);
 	CreateNative("EconResData_GetGameSkins", Native_GetGameSkins);
+	CreateNative("EconResData_GetGameClassnames", Native_GetGameClassnames);
 	CreateNative("EconResData_ValidGameSkin", Native_ValidGameSkin);
 	return APLRes_Success;
 }
@@ -591,6 +592,12 @@ any Native_GetGameSkins(Handle plugin, int params) {
 	if(ItemsGame.Skins == null) return view_as<Handle>(null);
 	if(ItemsGame.Skins.Length < 1) return view_as<Handle>(null);
 	return CloneHandle(ItemsGame.Skins);
+}
+
+any Native_GetGameClassnames(Handle plugin, int params) {
+	if(ItemsGame.Classnames == null) return view_as<Handle>(null);
+	if(ItemsGame.Classnames.Length < 1) return view_as<Handle>(null);
+	return CloneHandle(ItemsGame.Classnames);
 }
 
 any Native_ValidGameSkin(Handle plugin, int params) {

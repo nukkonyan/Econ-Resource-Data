@@ -59,16 +59,23 @@ native bool EconResData_ValidItemClassname(const char[] item_classname);
 /**
  * Returns the keyvalue handle of the items_game.txt file.
  *
- * Must be destroyed after use, to prevent leak.
+ * Must be destroyed after use to prevent leak.
  */
 native KeyValues EconResData_GetKeyValues();
 
 /**
  * Returns an array list of game skins.
  *
- * Must be destroyed after use, to prevent leak.
+ * Must be destroyed after use to prevent leak.
  */
 native ArrayList EconResData_GetGameSkins();
+
+/**
+ * Returns the game's classnames.
+ *
+ * Must be destroyed after use to prevent leak.
+ */
+native ArrayList EconResData_GetGameClassnames();
 
 /**
  * Returns if the skin id is valid.
@@ -97,6 +104,7 @@ public void __pl_econ_resource_data_SetNTVOptional() {
 	MarkNativeAsOptional("EconResData_ValidItemClassname");
 	MarkNativeAsOptional("EconResData_GetKeyValues");
 	MarkNativeAsOptional("EconResData_GetGameSkins");
+	MarkNativeAsOptional("EconResData_GetGameClassnames");
 	MarkNativeAsOptional("EconResData_ValidGameSkin");
 }
 #endif
