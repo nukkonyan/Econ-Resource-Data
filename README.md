@@ -12,7 +12,7 @@ Localize and translate strings from within the game.
   - ``EconResData_ValidGameSkin(int skin_id)``
 
 > # Todo
-  - Fix CS:GO tokens to be read properly from the language file, as some fails to be read.
+  - Fix CS:GO tokens to be read properly from the language file, as some fails to be read due to characters such as ``：`` and language-specific characters such as from japanese.
 
 > # Credits
   - Credits to [Dr. McKay](https://github.com/DoctorMcKay) for the language file parsing code, loaning from Enhanced Item Notifications plugin
