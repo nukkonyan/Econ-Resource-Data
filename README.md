@@ -13,7 +13,7 @@ Localize and translate strings from within the game.
 
 > # Todo
   - Fix CS:GO tokens to be read properly from the language file, as some fails to be read due to special characters.
-     - such as `：` and other language-specific characters which hinders from reading further through the language file.
+     - such as `：` and other language-specific characters hindering from reading further through the language file.
 
 > # Credits
   - Credits to [Dr. McKay](https://github.com/DoctorMcKay) for the language file parsing code, loaning from Enhanced Item Notifications plugin
