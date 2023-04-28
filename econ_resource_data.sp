@@ -285,11 +285,13 @@ enum struct ItemsGameRes {
 				line[i++] = ((data >> 6) & 0x1F) | 0xC0;
 				line[i++] = (data & 0x3F) | 0x80;
 			}
+			/*
 			else if(data < 0x8000) {
 				// It's a three-byte character
 				
 				// code to be put in here
 			}
+			*/
 			else if(data <= 0xFFFF) {
 				if(0xD800 <= data <= 0xDFFF) {
 					high_surrogate = data;
