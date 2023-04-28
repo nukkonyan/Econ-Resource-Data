@@ -22,7 +22,7 @@ char folder_name[16];
 
 enum struct ResourceInfo {
 	int language;
-	char token[1024];
+	char token[96];
 	char value[1024];
 }
 
@@ -285,6 +285,11 @@ enum struct ItemsGameRes {
 				line[i++] = ((data >> 6) & 0x1F) | 0xC0;
 				line[i++] = (data & 0x3F) | 0x80;
 			}
+			else if(data < 0x8000) {
+				// It's a three-byte character
+				
+				// code to be put in here
+			}
 			else if(data <= 0xFFFF) {
 				if(0xD800 <= data <= 0xDFFF) {
 					high_surrogate = data;
@@ -307,7 +312,7 @@ enum struct ItemsGameRes {
 		// Not a line containing at least one quoted string
 		if(line[0] != '"') return;
 		
-		char token[128], value[1024];
+		char token[96], value[1024];
 		int pos = BreakString(line, token, sizeof(token));
 		
 		// This line doesn't have two quoted strings
@@ -316,6 +321,7 @@ enum struct ItemsGameRes {
 		BreakString(line[pos], value, sizeof(value));
 		lang.SetString(token, value);
 		
+		// StringMap() limitation.
 		ResourceInfo info;
 		info.language = language;
 		info.token = token;
