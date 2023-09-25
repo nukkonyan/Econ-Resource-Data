@@ -48,6 +48,17 @@ native int EconResData_GetColour(const char[] token);
 native bool EconResData_GetItemName(int client, int itemdef, char[] name, int maxlen);
 
 /**
+ * Returns the item classname.
+ *
+ * @param	itemdef		The item definition index to read.
+ * @param	classname	The buffer to store the classname we've just retrieved.
+ * @param	maxlen		The maximum length of the classname output.
+ *
+ * @return	Returns if the item classname was found or not.
+ */
+native bool EconResData_GetItemClassname(int itemdef, char[] classname, int maxlen);
+
+/**
  * Returns wheter the item classname is valid.
  *
  * @param	classname	The item classname.
@@ -101,6 +112,7 @@ public void __pl_econ_resource_data_SetNTVOptional() {
 	MarkNativeAsOptional("EconResData_LocalizeToken");
 	MarkNativeAsOptional("EconResData_GetColour");
 	MarkNativeAsOptional("EconResData_GetItemName");
+	MarkNativeAsOptional("EconResData_GetItemClassname");
 	MarkNativeAsOptional("EconResData_ValidItemClassname");
 	MarkNativeAsOptional("EconResData_GetKeyValues");
 	MarkNativeAsOptional("EconResData_GetGameSkins");

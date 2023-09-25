@@ -12,7 +12,7 @@ public Plugin myinfo = {
 	name = "Econ Resource Data",
 	author = "チームキラー３２４",
 	description = "Localize tokens and translation strings.",
-	version = "1.0.9",
+	version = "1.1.0",
 	url = "https://steamcommunity.com/id/Teamkiller324"
 }
 
@@ -33,28 +33,46 @@ enum struct ItemsGameRes {
 	StringMap Colours;
 	ArrayList Classnames;
 	ArrayList Skins;
+	StringMap ClassnamesPrefab;
 	
-	void Load() {
+	void Load()
+	{
 		this.Schema = new KeyValues("items_game");
-		if(this.Schema.ImportFromFile(items_game_txt)) CallSchemaForward();
+		if(this.Schema.ImportFromFile(items_game_txt))
+		{
+			CallSchemaForward();
+		}
 		
 		this.Languages = new StringMap();
 		this.LanguagesBackup = new ArrayList(sizeof(ResourceInfo));
 		this.Colours = new StringMap();
 		this.Classnames = new ArrayList(16);
+		this.ClassnamesPrefab = new StringMap();
 		
-		switch(GetEngineVersion()) {
-			case Engine_TF2: if(StrEqual(folder_name, "tf", false)) this.Skins = new ArrayList();
-			case Engine_CSGO: this.Skins = new ArrayList();
+		switch(GetEngineVersion())
+		{
+			case Engine_TF2:
+			{
+				if(StrEqual(folder_name, "tf", false))
+				{
+					this.Skins = new ArrayList();
+				}
+			}
+			case Engine_CSGO:
+			{
+				this.Skins = new ArrayList();
+			}
 		}
 		
 		KeyValues kv = new KeyValues("Scheme");
 		kv.ImportFromFile(clientscheme_res);
 		
-		if(kv.JumpToKey("Colors")) {
+		if(kv.JumpToKey("Colors"))
+		{
 			kv.GotoFirstSubKey(false);
 			
-			do {
+			do
+			{
 				char name[32];
 				kv.GetSectionName(name, sizeof(name));
 				
@@ -71,10 +89,12 @@ enum struct ItemsGameRes {
 			kv.GoBack();
 		}
 		
-		if(kv.JumpToKey("BaseSettings")) {
+		if(kv.JumpToKey("BaseSettings"))
+		{
 			kv.GotoFirstSubKey(false);
 			
-			do {
+			do
+			{
 				char name[32];
 				kv.GetSectionName(name, sizeof(name));
 				
@@ -95,9 +115,11 @@ enum struct ItemsGameRes {
 		this.GetSkins();
 	}
 	
-	bool LocalizeToken(int client, const char[] token, char[] output, int maxlen) {
+	bool LocalizeToken(int client, const char[] token, char[] output, int maxlen)
+	{
 		StringMap lang = this.GetLanguage(client);
-		if(lang == null) {
+		if(lang == null)
+		{
 			LogError("Unable to localize token '%s' for server language!", token);
 			return false;
 		}
@@ -106,14 +128,17 @@ enum struct ItemsGameRes {
 		bool rtrn = lang.GetString(token, fallback, sizeof(fallback));
 		
 		// Some tokens just fails to be read even though it's stored.
-		if(!rtrn) {
+		if(!rtrn)
+		{
 			int index = -1, language = (client == LANG_SERVER) ? GetServerLanguage() : GetClientLanguage(client);
 			
-			if((index = this.LanguagesBackup.FindValue(language)) >= 0) {
+			if((index = this.LanguagesBackup.FindValue(language)) >= 0)
+			{
 				ResourceInfo info;
 				this.LanguagesBackup.GetArray(index, info, sizeof(info));
 				
-				if(StrEqual(fallback[1], info.token, false)) {
+				if(StrEqual(fallback[1], info.token, false))
+				{
 					strcopy(fallback, sizeof(fallback), info.value);
 					rtrn = true;
 				}
@@ -124,25 +149,35 @@ enum struct ItemsGameRes {
 		return rtrn;
 	}
 	
-	bool GetItemName(int client, int itemdef, char[] name, int maxlen) {
-		switch(GetEngineVersion()) {
-			case Engine_TF2: {
+	bool GetItemName(int client, int itemdef, char[] name, int maxlen)
+	{
+		switch(GetEngineVersion())
+		{
+			case Engine_TF2:
+			{
 				char index[24];
 				IntToString(itemdef, index, sizeof(index));
 				
 				this.Schema.Rewind();
 				this.Schema.JumpToKey("items");
 				
-				if(!this.Schema.JumpToKey(index)) return false;
+				if(!this.Schema.JumpToKey(index))
+				{
+					return false;
+				}
 				
 				char item_name[128];
 				this.Schema.GetString("item_name", item_name, sizeof(item_name));
 				
-				if(strlen(item_name) == 0) {
+				if(strlen(item_name) < 1)
+				{
 					char prefab[64];
 					this.Schema.GetString("prefab", prefab, sizeof(prefab));
 					
-					if(strlen(prefab) == 0) return false;
+					if(strlen(prefab) < 1)
+					{
+						return false;
+					}
 					
 					char armory_desc[32];
 					this.Schema.GetString("armory_desc", armory_desc, sizeof(armory_desc));
@@ -155,49 +190,72 @@ enum struct ItemsGameRes {
 					char buffer[3][64];
 					ExplodeString(prefab, " ", buffer, sizeof(buffer), sizeof(prefab));
 					
-					for(int i = 0; i < sizeof(buffer); i++) {
-						if(this.Schema.JumpToKey(buffer[i])) {
+					for(int i = 0; i < sizeof(buffer); i++)
+					{
+						if(this.Schema.JumpToKey(buffer[i]))
+						{
 							this.Schema.GetString("item_name", item_name, sizeof(item_name));
-							if(baseitem) this.Schema.SetNum("propername", 1);
+							if(baseitem)
+							{
+								this.Schema.SetNum("propername", 1);
+							}
 							break;
 						}
 					}
 					
-					if(strlen(item_name) == 0) return false;
+					if(strlen(item_name) < 1)
+					{
+						return false;
+					}
 				}
 				
 				StringMap lang = this.GetLanguage(client); //No memory leak to be worried about, since we don't clone it.
-				if(lang == null) {
+				if(lang == null)
+				{
 					LogError("Unable to get item name for server language (attempting to print to \"%L\")!", client);
 					return false;
 				}
 				
-				if(!this.LocalizeToken(client, item_name[1], name, maxlen)) return false;
+				if(!this.LocalizeToken(client, item_name[1], name, maxlen))
+				{
+					return false;
+				}
 				
 				char language_name[32];
 				lang.GetString("__name__", language_name, sizeof(language_name));
-				if(StrEqual(language_name, "english") && this.Schema.GetNum("propername")) Format(name, maxlen, "The %s", name);
+				if(StrEqual(language_name, "english") && this.Schema.GetNum("propername"))
+				{
+					Format(name, maxlen, "The %s", name);
+				}
 				
 				return true;
 			}
 			
-			case Engine_CSGO: {
+			case Engine_CSGO:
+			{
 				char index[24];
 				IntToString(itemdef, index, sizeof(index));
 				
 				this.Schema.Rewind();
 				this.Schema.JumpToKey("items");
 				
-				if(!this.Schema.JumpToKey(index)) return false;
+				if(!this.Schema.JumpToKey(index))
+				{
+					return false;
+				}
 				
 				char item_name[128];
 				this.Schema.GetString("item_name", item_name, sizeof(item_name));
 				
-				if(strlen(item_name) == 0) {
+				if(strlen(item_name) < 1)
+				{
 					char prefab[64];
 					this.Schema.GetString("prefab", prefab, sizeof(prefab));
 					
-					if(strlen(prefab) == 0) return false;
+					if(strlen(prefab) < 1)
+					{
+						return false;
+					}
 					
 					this.Schema.Rewind();
 					this.Schema.JumpToKey("prefabs");
@@ -205,17 +263,23 @@ enum struct ItemsGameRes {
 					char buffer[3][64];
 					ExplodeString(prefab, " ", buffer, sizeof(buffer), sizeof(prefab));
 					
-					for(int i = 0; i < sizeof(buffer); i++) {
-						if(this.Schema.JumpToKey(buffer[i])) {
+					for(int i = 0; i < sizeof(buffer); i++)
+					{
+						if(this.Schema.JumpToKey(buffer[i]))
+						{
 							this.Schema.GetString("item_name", item_name, sizeof(item_name));
 							break;
 						}
 					}
 					
-					if(strlen(item_name) == 0) return false;
+					if(strlen(item_name) < 1)
+					{
+						return false;
+					}
 					
 					StringMap lang = this.GetLanguage(client);
-					if(lang == null) {
+					if(lang == null)
+					{
 						LogError("Unable to get item name for server language (attempting to print to \"%L\")!", client);
 						return false;
 					}
@@ -228,39 +292,76 @@ enum struct ItemsGameRes {
 		return false;
 	}
 	
-	StringMap GetLanguage(int client) {
+	bool GetItemClassname(int itemdef, char[] classname, int maxlen)
+	{
+		switch(GetEngineVersion())
+		{
+			case Engine_TF2:
+			{
+				// to be added
+			}
+			
+			case Engine_CSGO:
+			{
+				char str_itemdef[11];
+				IntToString(itemdef, str_itemdef, sizeof(str_itemdef));
+				
+				this.Schema.Rewind();
+				this.Schema.JumpToKey("items");
+				
+				if(this.Schema.JumpToKey(str_itemdef))
+				{
+					this.Schema.GetString("name", classname, maxlen);
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	StringMap GetLanguage(int client)
+	{
 		int language = (client == LANG_SERVER) ? GetServerLanguage() : GetClientLanguage(client);
 		
 		char language_name[64];
 		GetLanguageInfo(language, _, _, language_name, sizeof(language_name));
 		
 		StringMap lang;
-		if(!this.Languages.GetValue(language_name, lang)) {
+		if(!this.Languages.GetValue(language_name, lang))
+		{
 			lang = this.ParseLanguage(language_name, language);
 			this.Languages.SetValue(language_name, lang);
 		}
 		
-		if(lang == null && client != LANG_SERVER) return this.GetLanguage(LANG_SERVER);
+		if(lang == null && client != LANG_SERVER)
+		{
+			return this.GetLanguage(LANG_SERVER);
+		}
 		//else if(lang == null) return null;
 		
 		return lang;
 	}
 	
-	StringMap ParseLanguage(const char[] language_name, int language) {
+	StringMap ParseLanguage(const char[] language_name, int language)
+	{
 		char filename[64];
 		Format(filename, sizeof(filename), "resource/%s_%s.txt", folder_name, language_name);
 		
-		File file = OpenFile(filename, "r");
-		
-		if(file == null) return null;
+		File file;
+		if((file = OpenFile(filename, "r")) == null)
+		{
+			return null;
+		}
 		
 		StringMap lang = new StringMap();
 		lang.SetString("__name__", language_name);
 		
 		int data, i = 0, high_surrogate, low_surrogate;
 		char line[4096];
-		while(ReadFileCell(file, data, 2) == 1) {
-			if(high_surrogate) {
+		while(ReadFileCell(file, data, 2) == 1)
+		{
+			if(high_surrogate)
+			{
 				// for characters in range 0x10000 <= X <= 0x10FFFF
 				low_surrogate = data;
 				data = ((high_surrogate - 0xD800) << 10) + (low_surrogate - 0xDC00) + 0x10000;
@@ -270,30 +371,36 @@ enum struct ItemsGameRes {
 				line[i++] = (data & 0x3F) | 0x80;
 				high_surrogate = 0;
 			}
-			else if(data < 0x80) {
+			else if(data < 0x80)
+			{
 				// It's a single-byte character
 				line[i++] = data;
 				
-				if(data == '\n') {
+				if(data == '\n')
+				{
 					line[i] = '\0';
 					this.HandleLangLine(line, lang, language);
 					i = 0;
 				}
 			}
-			else if(data < 0x800) {
+			else if(data < 0x800)
+			{
 				// It's a two-byte character
 				line[i++] = ((data >> 6) & 0x1F) | 0xC0;
 				line[i++] = (data & 0x3F) | 0x80;
 			}
 			/*
-			else if(data < 0x8000) {
+			else if(data < 0x8000)
+			{
 				// It's a three-byte character
 				
 				// code to be put in here
 			}
 			*/
-			else if(data <= 0xFFFF) {
-				if(0xD800 <= data <= 0xDFFF) {
+			else if(data <= 0xFFFF)
+			{
+				if(0xD800 <= data <= 0xDFFF)
+				{
 					high_surrogate = data;
 					continue;
 				}
@@ -331,17 +438,39 @@ enum struct ItemsGameRes {
 		this.LanguagesBackup.PushArray(info);
 	}
 	
-	void GetClassnames() {
-		switch(GetEngineVersion()) {
-			case Engine_CSGO: {
+	void GetClassnames()
+	{
+		switch(GetEngineVersion())
+		{
+			case Engine_CSGO:
+			{
 				this.Schema.Rewind();
 				
-				if(this.Schema.JumpToKey("prefabs")) {
-					if(this.Schema.GotoFirstSubKey()) {
-						do {
+				if(this.Schema.JumpToKey("prefabs"))
+				{
+					if(this.Schema.GotoFirstSubKey())
+					{
+						do
+						{
 							char classname[64];
-							if(this.Schema.GetString("item_class", classname, sizeof(classname))) if(strlen(classname) >= 1) if(this.Classnames.FindString(classname) == -1) this.Classnames.PushString(classname);
-							if(this.Schema.GetString("anim_class", classname, sizeof(classname))) if(strlen(classname) >= 1) if(this.Classnames.FindString(classname) == -1) this.Classnames.PushString(classname);
+							
+							this.Schema.GetString("item_class", classname, sizeof(classname));
+							if(strlen(classname) > 0)
+							{
+								if(this.Classnames.FindString(classname) == -1)
+								{
+									this.Classnames.PushString(classname);
+								}
+							}
+							
+							this.Schema.GetString("anim_class", classname, sizeof(classname));
+							if(strlen(classname) > 0)
+							{
+								if(this.Classnames.FindString(classname) == -1)
+								{
+									this.Classnames.PushString(classname);
+								}
+							}
 						}
 						while(this.Schema.GotoNextKey());
 						
@@ -351,32 +480,60 @@ enum struct ItemsGameRes {
 					this.Schema.GoBack();
 				}
 				
-				if(this.Schema.JumpToKey("items")) {
-					if(this.Schema.GotoFirstSubKey()) {
-						do {
+				if(this.Schema.JumpToKey("items"))
+				{
+					if(this.Schema.GotoFirstSubKey())
+					{
+						do
+						{
 							char classname[64];
-							if(this.Schema.GetString("item_class", classname, sizeof(classname))) if(strlen(classname) >= 1) if(this.Classnames.FindString(classname) == -1) this.Classnames.PushString(classname);
+							this.Schema.GetString("item_class", classname, sizeof(classname));
+							
+							if(strlen(classname) >= 1)
+							{
+								if(this.Classnames.FindString(classname) == -1)
+								{
+									this.Classnames.PushString(classname);
+								}
+							}
 						}
 						while(this.Schema.GotoNextKey());
 					}
 				}
 			}
 			
-			case Engine_TF2: {
-				if(!StrEqual(folder_name, "tf", false)) return;				
-				if(!this.Schema.JumpToKey("prefabs")) return;
+			case Engine_TF2:
+			{
+				if(!StrEqual(folder_name, "tf", false))
+				{
+					return;
+				}
 				
-				if(this.Schema.GotoFirstSubKey()) {
-					do {
+				if(!this.Schema.JumpToKey("prefabs"))
+				{
+					return;
+				}
+				
+				if(this.Schema.GotoFirstSubKey())
+				{
+					do
+					{
 						char section[64], item_class[64];
 						this.Schema.GetSectionName(section, sizeof(section));
 						this.Schema.GetString("item_class", item_class, sizeof(item_class));
 						
 						// valid item classname
-						if(strlen(item_class) > 0) if(this.Classnames.FindString(item_class) == -1) this.Classnames.PushString(item_class);
+						if(strlen(item_class) > 0)
+						{
+							if(this.Classnames.FindString(item_class) == -1)
+							{
+								this.Classnames.PushString(item_class);
+							}
+						}
 						
 						// no item classname, must find prefab within
-						else {
+						else
+						{
 							char prefabs[96];
 							this.Schema.GetString("prefab", prefabs, sizeof(prefabs));
 							this.Schema.GoBack();
@@ -384,25 +541,42 @@ enum struct ItemsGameRes {
 							char buffer1[4][64];
 							int found1 = ExplodeString(prefabs, " ", buffer1, sizeof(buffer1), 64);
 							
-							for(int i = 0; i < found1; i++) {
+							for(int i = 0; i < found1; i++)
+							{
 								// found valid prefab within
-								if(this.Schema.JumpToKey(buffer1[i])) {
+								if(this.Schema.JumpToKey(buffer1[i]))
+								{
 									this.Schema.GetString("item_class", item_class, sizeof(item_class));
 									this.Schema.GoBack();
 									
-									if(strlen(item_class) > 0) if(this.Classnames.FindString(item_class) == -1) this.Classnames.PushString(item_class);
-									else {
+									if(strlen(item_class) > 0)
+									{
+										if(this.Classnames.FindString(item_class) == -1)
+										{
+											this.Classnames.PushString(item_class);
+										}
+									}
+									else
+									{
 										char buffer2[4][64];
 										int found2 = ExplodeString(prefabs, " ", buffer2, sizeof(buffer2), 64);
 										
 										this.Schema.GetString("prefab", prefabs, sizeof(prefabs));
 										
-										for(int x = 0; x < found2; x++) {
-											if(this.Schema.JumpToKey(buffer2[x])) {
+										for(int x = 0; x < found2; x++)
+										{
+											if(this.Schema.JumpToKey(buffer2[x]))
+											{
 												this.Schema.GetString("item_class", item_class, sizeof(item_class));
 												this.Schema.GoBack();
 												
-												if(strlen(item_class) > 0) if(this.Classnames.FindString(item_class) == -1) this.Classnames.PushString(item_class);
+												if(strlen(item_class) > 0)
+												{
+													if(this.Classnames.FindString(item_class) == -1)
+													{
+														this.Classnames.PushString(item_class);
+													}
+												}
 											}
 										}
 									}
@@ -487,6 +661,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("EconResData_LocalizeToken", Native_LocalizeToken);
 	CreateNative("EconResData_GetColour", Native_GetColour);
 	CreateNative("EconResData_GetItemName", Native_GetItemName);
+	CreateNative("EconResData_GetItemClassname", Native_GetItemClassname);
 	CreateNative("EconResData_ValidItemClassname", Native_ValidItemClassname);
 	CreateNative("EconResData_GetKeyValues", Native_GetKeyValues);
 	CreateNative("EconResData_GetGameSkins", Native_GetGameSkins);
@@ -495,7 +670,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	return APLRes_Success;
 }
 
-public void OnPluginStart() {
+public void OnPluginStart()
+{
 	GetGameFolderName(folder_name, sizeof(folder_name));
 	
 	ItemsGame.Load();
@@ -575,6 +751,19 @@ any Native_GetItemName(Handle plugin, int params) {
 	bool rtrn = ItemsGame.GetItemName(client, itemdef, name, maxlen);
 	
 	SetNativeString(3, name, maxlen);
+	
+	return rtrn;
+}
+
+// EconResData_GetItemClassname(int itemdef, char[] classname, int maxlen)
+any Native_GetItemClassname(Handle plugin, int params) {
+	int itemdef = GetNativeCell(1);
+	int maxlen = GetNativeCell(3);
+	char[] name = new char[maxlen];
+	
+	bool rtrn = ItemsGame.GetItemClassname(itemdef, name, maxlen);
+	
+	SetNativeString(2, name, maxlen);
 	
 	return rtrn;
 }
