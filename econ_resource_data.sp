@@ -8,9 +8,10 @@
  * Check 'Enhanced Item Notifications' made by legendary Dr. McKay.
  */
 
-public Plugin myinfo = {
+public Plugin myinfo =
+{
 	name = "Econ Resource Data",
-	author = "チームキラー３２４",
+	author = "tk /id/Teamkiller324",
 	description = "Localize tokens and translation strings.",
 	version = "1.1.0",
 	url = "https://steamcommunity.com/id/Teamkiller324"
@@ -20,13 +21,15 @@ public Plugin myinfo = {
 #define clientscheme_res "resource/clientscheme.res"
 char folder_name[16];
 
-enum struct ResourceInfo {
+enum struct ResourceInfo
+{
 	int language;
 	char token[96];
 	char value[1024];
 }
 
-enum struct ItemsGameRes {
+enum struct ItemsGameRes
+{
 	KeyValues Schema;
 	StringMap Languages;
 	ArrayList LanguagesBackup;
