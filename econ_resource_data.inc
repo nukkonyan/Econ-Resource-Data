@@ -70,32 +70,50 @@ native bool EconResData_ValidItemClassname(const char[] item_classname);
 /**
  * Returns the keyvalue handle of the items_game.txt file.
  *
- * Must be destroyed after use to prevent leak.
+ * Must be destroyed after use to prevent memory leak.
  */
 native KeyValues EconResData_GetKeyValues();
 
 /**
  * Returns an array list of game skins.
  *
- * Must be destroyed after use to prevent leak.
+ * Must be destroyed after use to prevent memory leak.
  */
 native ArrayList EconResData_GetGameSkins();
 
 /**
  * Returns the game's classnames.
  *
- * Must be destroyed after use to prevent leak.
+ * Must be destroyed after use to prevent memory leak.
  */
 native ArrayList EconResData_GetGameClassnames();
 
 /**
  * Returns if the skin id is valid.
  *
- * @param	skin_id		The skin id.
+ * @param	skin_id		The skin's defined id.
  *
  * @error	If game contains no skins, this returns false.
  */
 native bool EconResData_ValidGameSkin(int skin_id);
+
+/**
+ * Returns the game's graffitis.
+ * This is CS:GO only.
+ *
+ * Must be destroyed after use to prevent memory leak.
+ */
+native ArrayList EconResData_GetGameGraffitis();
+
+/**
+ * Returns if the graffiti id is valid.
+ * This is CS:GO only.
+ *
+ * @param	graffiti_id		The graffiti's defined item id.
+ *
+ * @error	If game contains no graffitis, this returns false.
+ */
+native bool EconResData_ValidGameGraffiti(int graffiti_id);
 
 public SharedPlugin __pl_econ_resource_data = {
 	name = "EconResourceData",
@@ -118,5 +136,7 @@ public void __pl_econ_resource_data_SetNTVOptional() {
 	MarkNativeAsOptional("EconResData_GetGameSkins");
 	MarkNativeAsOptional("EconResData_GetGameClassnames");
 	MarkNativeAsOptional("EconResData_ValidGameSkin");
+	MarkNativeAsOptional("EconResData_GetGameGraffitis");
+	MarkNativeAsOptional("EconResData_ValidGameGraffiti");
 }
 #endif

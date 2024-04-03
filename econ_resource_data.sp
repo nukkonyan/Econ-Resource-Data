@@ -11,10 +11,10 @@
 public Plugin myinfo =
 {
 	name = "Econ Resource Data",
-	author = "tk /id/Teamkiller324",
+	author = "nukkonyan",
 	description = "Localize tokens and translation strings.",
-	version = "1.1.0",
-	url = "https://steamcommunity.com/id/Teamkiller324"
+	version = "1.1.1",
+	url = "https://github.com/nukkonyan"
 }
 
 #define items_game_txt "scripts/items/items_game.txt"
@@ -37,6 +37,7 @@ enum struct ItemsGameRes
 	ArrayList Classnames;
 	ArrayList Skins;
 	StringMap ClassnamesPrefab;
+	ArrayList Graffitis;
 	
 	void Load()
 	{
@@ -64,6 +65,7 @@ enum struct ItemsGameRes
 			case Engine_CSGO:
 			{
 				this.Skins = new ArrayList();
+				this.Graffitis = new ArrayList();
 			}
 		}
 		
@@ -116,6 +118,7 @@ enum struct ItemsGameRes
 		
 		this.GetClassnames();
 		this.GetSkins();
+		this.GetGraffitis();
 	}
 	
 	bool LocalizeToken(int client, const char[] token, char[] output, int maxlen)
@@ -645,6 +648,57 @@ enum struct ItemsGameRes
 			}
 		}
 	}
+	
+	void GetGraffitis()
+	{
+		if(GetEngineVersion() == Engine_CSGO)
+		{
+			this.Schema.Rewind();
+			
+			// search after 'sticker_kits', graffitis are stored in same array as stickers..
+			if(this.Schema.GotoFirstSubKey())
+			{
+				// found 'sticker_kits', lets read through it's KeyValue arrayed information..
+				do
+				{
+					char section_name[32];
+					this.Schema.GetSectionName(section_name, sizeof(section_name));
+					
+					if(StrEqual(section_name, "sticker_kits"))
+					{
+						if(this.Schema.GotoFirstSubKey())
+						{
+							do
+							{
+								char str_itemdef[11];
+								this.Schema.GetSectionName(str_itemdef, sizeof(str_itemdef));
+								
+								if(strlen(str_itemdef) > 0)
+								{
+									int itemdef = StringToInt(str_itemdef);
+									
+									char sticker_material[64];
+									this.Schema.GetString("sticker_material", sticker_material, sizeof(sticker_material));
+									
+									if(StrContains(sticker_material, "graffiti") != -1)
+									{
+										this.Graffitis.Push(itemdef);
+										//PrintToServer("found graffiti %s '%s'", str_itemdef, sticker_material);
+									}
+								}
+							}
+							while(this.Schema.GotoNextKey());
+							
+							this.Schema.GoBack();
+						}
+					}
+				}
+				while(this.Schema.GotoNextKey());
+				
+				this.Schema.GoBack();
+			}
+		}
+	}
 }
 
 ItemsGameRes ItemsGame;
@@ -670,6 +724,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("EconResData_GetGameSkins", Native_GetGameSkins);
 	CreateNative("EconResData_GetGameClassnames", Native_GetGameClassnames);
 	CreateNative("EconResData_ValidGameSkin", Native_ValidGameSkin);
+	CreateNative("EconResData_GetGameGraffiti", Native_GetGameGraffitis);
+	CreateNative("EconResData_ValidGameGraffiti", Native_ValidGameGraffiti);
 	return APLRes_Success;
 }
 
@@ -711,7 +767,7 @@ Action TranslateTokenCmd(int client, int args)
 
 // --
 
-// EconResData(int client, const char[] token, char[] output, int maxlen)
+// EconResData_LocalizeToken(int client, const char[] token, char[] output, int maxlen)
 any Native_LocalizeToken(Handle plugin, int params) {
 	int client = GetNativeCell(1);
 	
@@ -804,6 +860,20 @@ any Native_ValidGameSkin(Handle plugin, int params) {
 	if(ItemsGame.Skins == null) return false;
 	if(ItemsGame.Skins.Length < 1) return view_as<Handle>(null);
 	return ItemsGame.Skins.FindValue(GetNativeCell(1)) != -1;
+}
+
+// EconResData_GetGameGraffitis()
+any Native_GetGameGraffitis(Handle plugin, int params)
+{
+	return CloneHandle(ItemsGame.Graffitis);
+}
+
+// EconResData_ValidGameGraffiti(int itemdef)
+any Native_ValidGameGraffiti(Handle plugin, int params)
+{
+	if(ItemsGame.Graffitis == null) return false;
+	if(ItemsGame.Graffitis.Length < 1) return false;
+	return ItemsGame.Graffitis.FindValue(GetNativeCell(1)) != -1;
 }
 
 // --
