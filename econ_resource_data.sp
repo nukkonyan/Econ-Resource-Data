@@ -724,7 +724,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("EconResData_GetGameSkins", Native_GetGameSkins);
 	CreateNative("EconResData_GetGameClassnames", Native_GetGameClassnames);
 	CreateNative("EconResData_ValidGameSkin", Native_ValidGameSkin);
-	CreateNative("EconResData_GetGameGraffiti", Native_GetGameGraffitis);
+	CreateNative("EconResData_GetGameGraffitis", Native_GetGameGraffitis);
 	CreateNative("EconResData_ValidGameGraffiti", Native_ValidGameGraffiti);
 	return APLRes_Success;
 }
